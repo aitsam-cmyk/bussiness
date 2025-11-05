@@ -1,0 +1,721 @@
+<!Doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Car Garage — Premium Car Deals</title>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .modal-content img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        
+        .close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+         :root {
+            --accent: #0b4a6f;
+            --accent-2: #f5c041;
+            --bg: #f6f8fb;
+            --card: #ffffff;
+            --muted: #6b7280;
+            --radius: 12px;
+            --glass: rgba(11, 74, 111, 0.06);
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+        
+        * {
+            box-sizing: border-box
+        }
+        
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #f6f8fb 0%, #ffffff 100%);
+            color: #07102a;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            background: var(--card);
+            box-shadow: 0 6px 18px rgba(9, 20, 34, 0.04);
+            position: sticky;
+            top: 0;
+            z-index: 50
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+        
+        .logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #163b5a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--accent)
+        }
+        
+        nav a {
+            margin-left: 18px;
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 600
+        }
+        
+        nav a:hover {
+            color: var(--accent)
+        }
+        
+        .slider-wrap {
+            position: relative;
+            overflow: hidden;
+            max-height: 420px;
+            border-radius: 14px;
+            margin: 18px auto;
+            max-width: 1200px
+        }
+        
+        .slides {
+            display: flex;
+            transition: transform .7s ease;
+            height: 420px
+        }
+        
+        .slide {
+            min-width: 100%;
+            height: 420px;
+            position: relative
+        }
+        
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block
+        }
+        
+        .slide-overlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.0) 10%, rgba(2, 6, 23, 0.25) 60%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 34px;
+            color: white
+        }
+        
+        .slider-controls {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 12px;
+            display: flex;
+            gap: 8px
+        }
+        
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer
+        }
+        
+        .dot.active {
+            background: var(--accent-2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2)
+        }
+        
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(9, 20, 34, 0.08)
+        }
+        
+        .arrow.left {
+            left: 12px
+        }
+        
+        .arrow.right {
+            right: 12px
+        }
+        
+        .arrow svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent)
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 0 18px
+        }
+        
+        h2.section-title {
+            font-size: 22px;
+            color: #07102a;
+            margin: 8px 0 18px;
+            text-align: center
+        }
+        
+        .row-wrap {
+            position: relative
+        }
+        
+        .car-row {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            padding: 12px 6px;
+            scroll-behavior: smooth
+        }
+        
+        .car-card {
+            min-width: 240px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(11, 20, 34, 0.06);
+            flex-shrink: 0;
+            padding: 10px;
+            cursor: pointer;
+            transition: transform .18s
+        }
+        
+        .car-card:hover {
+            transform: translateY(-6px)
+        }
+        
+        .car-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 8px
+        }
+        
+        .car-card .meta {
+            padding: 8px 6px
+        }
+        
+        .car-card .name {
+            font-weight: 700;
+            color: #07102a;
+            margin: 6px 0
+        }
+        
+        .car-card .price {
+            color: var(--accent);
+            font-weight: 800
+        }
+        
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--glass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20
+        }
+        
+        .scroll-btn.left {
+            left: -8px
+        }
+        
+        .scroll-btn.right {
+            right: -8px
+        }
+        
+        .sold {
+            opacity: 0.55;
+            pointer-events: none;
+            position: relative
+        }
+        
+        .sold::after {
+            content: "SOLD";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #d9534f;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-weight: 700
+        }
+        
+        .modal-back {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 80
+        }
+        
+        .modal {
+            background: var(--card);
+            border-radius: 12px;
+            max-width: 900px;
+            width: 92%;
+            display: flex;
+            gap: 18px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .modal .left {
+            flex: 1;
+            position: relative;
+        }
+        /* Gallery inside modal */
+        
+        .gallery {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        
+        .gallery img.active {
+            display: block;
+        }
+        
+        .g-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            z-index: 10;
+        }
+        
+        .g-arrow.left {
+            left: 8px;
+        }
+        
+        .g-arrow.right {
+            right: 8px;
+        }
+        
+        .modal .right {
+            flex: 1;
+            padding: 22px
+        }
+        
+        .modal .right h3 {
+            margin: 0 0 8px
+        }
+        
+        .modal .specs {
+            color: var(--muted);
+            line-height: 1.6
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            margin-top: 12px
+        }
+        
+        .btn.wh {
+            background: #25D366;
+            color: white
+        }
+        
+        .close-x {
+            position: absolute;
+            right: 12px;
+            top: 8px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333
+        }
+        
+        footer {
+            padding: 26px;
+            text-align: center;
+            color: var(--muted);
+            margin-top: 28px
+        }
+        
+        @media (max-width:880px) {
+            .modal {
+                flex-direction: column
+            }
+            .slides {
+                height: 260px
+            }
+            .slide {
+                height: 260px
+            }
+            .slider-wrap {
+                height: 260px
+            }
+            .car-card img {
+                height: 120px
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="brand">
+            <img src="./garage logo.png" alt="logo" width="77" height="77">
+
+            <div>
+                <h1>Car Garage</h1>
+                <div style="font-size:12px;color:var(--muted)">Premium Used & New Cars</div>
+            </div>
+        </div>
+
+        <nav>
+            <a href="#top-slider">Home</a>
+            <a href="#available">Available Cars</a>
+            <a href="#sold">Sold Cars</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <!-- TOP SLIDER -->
+    <div class="slider-wrap" id="top-slider">
+        <div class="slides" id="slides">
+            <div class="slide"><img src="./pic1.png" alt="">
+                <div class="slide-overlay">
+                    <h2>Quality Cars. Fair Prices.</h2>
+                </div>
+            </div>
+            <div class="slide"><img src="./pic 5.png" alt="">
+                <div class="slide-overlay">
+                    <h2>Drive Home Today</h2>
+                </div>
+            </div>
+            <div class="slide"><img src="./pic2.png" alt="">
+                <div class="slide-overlay">
+                    <h2>Trade-ins Welcome</h2>
+                </div>
+            </div>
+        </div>
+        <button class="arrow left" id="slidePrev" aria-label="previous slide">❮</button>
+        <button class="arrow right" id="slideNext" aria-label="next slide">❯</button>
+        <div class="slider-controls" id="dots">
+            <div class="dot active" data-index="0"></div>
+            <div class="dot" data-index="1"></div>
+            <div class="dot" data-index="2"></div>
+        </div>
+    </div>
+
+    <!-- AVAILABLE CARS -->
+    <div class="container" id="available">
+        <h2 class="section-title">Available Cars</h2>
+        <div class="row-wrap">
+            <button class="scroll-btn left" onclick="scrollRow('rowAvailable', -300)">&larr;</button>
+            <div class="car-row" id="rowAvailable">
+                <div class="car-card" onclick="openModal({
+          name:'Suzuki Cultus 2006',
+          price:'PKR 810,000',
+          imgs:['cul1.jpeg','cul2.jpeg','cul3.jpeg','cul4.jpeg','cul5.jpeg','cul6.jpeg','cul7.jpeg','cul8.jpeg','cul9.jpeg','cul10.jpeg','cul11.jpeg','cul12.jpeg','cul13.jpeg'],
+          desc:'Genuine interior, accident-free,tires ok,outer Roof Genioun,machanically ok,Registered:Mansehra.',
+          specs:['Engine: 1000cc','Condition: Very Good']
+        })">
+                    <img src="./cul11.jpeg" alt="Suzuki Cultus">
+                    <div class="meta">
+                        <div class="name">Suzuki Cultus 2006</div>
+                        <div class="price">PKR 810,000</div>
+                    </div>
+                </div>
+
+                <div class="car-card" onclick="openModal({
+          name:'Nissan Sunny 1986',
+          price:'PKR 550,000',
+        imgs:['nis1.jpeg','nis2.jpeg','nis3.jpeg','nis4.jpeg','nis5.jpeg','nis6.jpeg','nis7.jpeg','nis8.jpeg','nis9.jpeg','nis10.jpeg','nis11.jpeg'],
+          desc:'Japan Import, ideal city car,Good Condition,Interior genioun,Exterior 70-75% genioun, Mechanically ok.',
+          specs:['Engine: 1300cc','Registered:1994','Condition: Excellent, Home Used']
+        })">
+                    <img src="./nis8.jpeg" alt="White Nissan Sunny sedan parked in a driveway. The vehicle has a black grille with a red emblem, well-maintained exterior paint, and Punjab registration plates. Arabic calligraphy stickers adorn the windshield. LED light bars are mounted below the front bumper. The scene has a calm residential setting with foliage visible in the background.">
+                    <div class="meta">
+                        <div class="name">Nissan Sunny</div>
+                        <div class="price">PKR 550,000</div>
+                    </div>
+                </div>
+            </div>
+            <button class="scroll-btn right" onclick="scrollRow('rowAvailable', 300)">&rarr;</button>
+        </div>
+    </div>
+
+    <!-- SOLD CARS -->
+    <div style="background:linear-gradient(180deg,#fff8f9,#fff);padding:28px 0;" id="sold">
+        <div class="container">
+            <h2 class="section-title">Sold Cars</h2>
+            <div class="row-wrap">
+                <button class="scroll-btn left" onclick="scrollRow('rowSold', -300)">&larr;</button>
+                <div class="car-row" id="rowSold">
+                    <div class="car-card sold"><img src="./gli2015.jpg" alt="">
+                        <div class="meta">
+                            <div class="name">Toyota Gli 2015</div>
+                            <div class="price">SOLD</div>
+                        </div>
+                    </div>
+                    <div class="car-card sold">
+                        <img src="./gli 2011.jpg" alt="">
+                        <div class="meta">
+                            <div class="name">Toyota Corolla 2011</div>
+                            <div class="price">SOLD</div>
+                        </div>
+                    </div>
+                    <div class="car-card sold">
+                        <img src="./grandi 2024.jpg" alt="">
+                        <div class="meta">
+                            <div class="name">Toyota Grandi 2024</div>
+                            <div class="price">SOLD</div>
+                        </div>
+                    </div>
+                    <div class="car-card sold">
+                        <img src="./xli2011.jpg" alt="">
+                        <div class="meta">
+                            <div class="name">Toyota Xli 2011</div>
+                            <div class="price">SOLD</div>
+                        </div>
+                        <button class="scroll-btn right" onclick="scrollRow('rowSold', 300)">&rarr;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTACT -->
+            <div class="container" id="contact">
+                <h2 class="section-title">Contact</h2>
+                <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; width:100%;">
+                    <div style="background:var(--card); padding:20px; border-radius:12px; box-shadow:0 6px 18px rgba(11,20,34,0.05); text-align:center; min-width:260px;">
+                        <h3 style="margin:0; color:var(--accent);">Car Garage</h3>
+                        <p>Akora Khattak, Pakistan</p>
+                        <p><strong>Phone:</strong> <a href="tel:+923437118345">+92 333 9017459</a></p>
+                        <p><strong>Email:</strong> <a href="mailto:cargaragepk@gmail.com">cargarage459@gmail.com</a></p>
+
+                        <!-- Social Links -->
+                        <div style="margin-top:14px; display:flex; justify-content:center; gap:14px;">
+                            <a href="https://www.facebook.com/share/1A1eVnpDtU/" target="_blank" style="background:#1877F2; color:white; padding:8px 14px; border-radius:8px; text-decoration:none; font-weight:600;">
+               Facebook
+            </a>
+                            <a href="https://www.tiktok.com/@caraddicted809" target="_blank" style="background:#000; color:white; padding:8px 14px; border-radius:8px; text-decoration:none; font-weight:600;">
+               TikTok
+            </a>
+                        </div>
+                    </div>
+                </div>
+
+
+                <footer>© <span id="year"></span> Car Garage All rights reserved</footer>
+
+                <!-- MODAL -->
+                <div class="modal-back" id="modalBack">
+                    <div class="modal" role="dialog" aria-modal="true">
+                        <button class="close-x" onclick="closeModal()">✕</button>
+                        <div class="left">
+                            <div id="modalGallery" class="gallery"></div>
+                            <button id="galleryPrev" class="g-arrow left">❮</button>
+                            <button id="galleryNext" class="g-arrow right">❯</button>
+                        </div>
+                        <div class="right">
+                            <h3 id="modalName">Car Name</h3>
+                            <div id="modalPrice" style="font-weight:800;color:var(--accent)"></div>
+                            <p id="modalDesc" style="color:var(--muted)"></p>
+                            <ul id="modalSpecs" style="color:var(--muted)"></ul>
+                            <a id="whBtn" class="btn wh" href="#" target="_blank">WhatsApp</a>
+                            <a id="callBtn" class="btn" href="#" style="background:var(--accent-2);color:#07102a">Call</a>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    document.getElementById('year').textContent = new Date().getFullYear();
+
+                    function scrollRow(id, distance) {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        el.scrollBy({
+                            left: distance,
+                            behavior: 'smooth'
+                        });
+                    }
+
+                    const modalBack = document.getElementById('modalBack');
+
+                    function openModal(data) {
+                        const gallery = document.getElementById('modalGallery');
+                        gallery.innerHTML = '';
+
+                        if (Array.isArray(data.imgs)) {
+                            data.imgs.forEach((src, i) => {
+                                const img = document.createElement('img');
+                                img.src = src;
+                                if (i === 0) img.classList.add('active');
+                                gallery.appendChild(img);
+                            });
+                        } else if (data.img) {
+                            const img = document.createElement('img');
+                            img.src = data.img;
+                            img.classList.add('active');
+                            gallery.appendChild(img);
+                        }
+
+                        document.getElementById('modalName').innerText = data.name;
+                        document.getElementById('modalPrice').innerText = data.price;
+                        document.getElementById('modalDesc').innerText = data.desc || '';
+
+                        const specsList = document.getElementById('modalSpecs');
+                        specsList.innerHTML = '';
+                        if (Array.isArray(data.specs)) {
+                            data.specs.forEach(s => {
+                                const li = document.createElement('li');
+                                li.innerText = s;
+                                specsList.appendChild(li);
+                            });
+                        }
+
+                        const phone = '+923339017459';
+                        document.getElementById('whBtn').href = `https://api.whatsapp.com/send?phone=${phone}&text=I'm%20interested%20in%20${encodeURIComponent(data.name)}`;
+                        document.getElementById('callBtn').href = `tel:${phone}`;
+
+                        modalBack.style.display = 'flex';
+
+                        let current = 0;
+                        const imgs = gallery.querySelectorAll('img');
+                        const prevBtn = document.getElementById('galleryPrev');
+                        const nextBtn = document.getElementById('galleryNext');
+
+                        function show(i) {
+                            imgs[current].classList.remove('active');
+                            current = (i + imgs.length) % imgs.length;
+                            imgs[current].classList.add('active');
+                        }
+
+                        prevBtn.onclick = () => show(current - 1);
+                        nextBtn.onclick = () => show(current + 1);
+                    }
+
+                    function closeModal() {
+                        modalBack.style.display = 'none';
+                    }
+
+                    modalBack.addEventListener('click', function(e) {
+                        if (e.target === modalBack) closeModal();
+                    });
+
+                    // === SLIDER LOGIC ===
+                    const slides = document.querySelectorAll(".slide");
+                    const dots = document.querySelectorAll(".dot");
+                    const nextBtn = document.getElementById("slideNext");
+                    const prevBtn = document.getElementById("slidePrev");
+                    const slidesContainer = document.getElementById("slides");
+
+                    let currentSlide = 0;
+                    const totalSlides = slides.length;
+
+                    function showSlide(index) {
+                        currentSlide = (index + totalSlides) % totalSlides;
+                        slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+                        dots.forEach((dot, i) => {
+                            dot.classList.toggle("active", i === currentSlide);
+                        });
+                    }
+
+                    // Manual navigation
+                    nextBtn.addEventListener("click", () => showSlide(currentSlide + 1));
+                    prevBtn.addEventListener("click", () => showSlide(currentSlide - 1));
+
+                    // Dots navigation
+                    dots.forEach((dot, i) => {
+                        dot.addEventListener("click", () => showSlide(i));
+                    });
+
+                    // Automatic sliding every 4 seconds
+                    setInterval(() => {
+                        showSlide(currentSlide + 1);
+                    }, 2000);
+                </script>
+</body>
+
+</html>
