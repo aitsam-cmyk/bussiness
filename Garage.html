@@ -435,7 +435,7 @@
             right: -8px
         }
 
-        /* --- NEW CSS FIX FOR MOBILE VIEW --- */
+        /* --- CSS FIX FOR MAIN ROW SCROLL BUTTONS ON MOBILE (Fix 1) --- */
         @media (max-width: 600px) {
             .scroll-btn {
                 /* Hide the buttons on mobile, as users can swipe */
@@ -447,7 +447,7 @@
                 padding: 0 10px;
             }
         }
-        /* --- END NEW CSS FIX --- */
+        /* --- END MAIN ROW CSS FIX --- */
 
         .sold {
             opacity: 0.55;
@@ -493,10 +493,11 @@
             display: block;
         }
 
+        /* FIX FOR MODAL GALLERY ARROWS (Fix 2) */
         .g-arrow {
             position: absolute;
             top: 50%;
-            transform: translateY(-50%);
+            transform: translateY(-50%); /* This ensures perfect vertical centering */
             background: rgba(255, 255, 255, 0.8);
             border: none;
             font-size: 22px;
@@ -583,6 +584,11 @@
                 flex-direction: column
             }
 
+            /* FIX 2: Set predictable height for modal image container on mobile */
+            .modal .left {
+                height: 280px; 
+            }
+            
             .slides {
                 height: 260px
             }
