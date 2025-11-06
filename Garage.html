@@ -336,10 +336,7 @@
             box-shadow: 0 4px 14px rgba(9, 20, 34, 0.08)
         }
 
-        .arrow.left {
-            left: 12px
-        }
-
+        /* --- REMOVED: .arrow.left { left: 12px } --- */
         .arrow.right {
             right: 12px
         }
@@ -484,7 +481,21 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            /* This centers the arrow vertically */
+
+            /* ENFORCING SYMMETRY AND CENTERING */
+            width: 40px;
+            /* Fixed width */
+            height: 40px;
+            /* Fixed height for perfect square */
+            display: flex;
+            /* Use flexbox to center content */
+            align-items: center;
+            /* Vertically center the arrow symbol */
+            justify-content: center;
+            /* Horizontally center the arrow symbol */
+            padding: 0;
+            /* Remove padding now that size is fixed */
+
             background: rgba(0, 0, 0, 0.55);
             /* Dark/transparent background */
             color: white;
@@ -492,8 +503,6 @@
             border: none;
             font-size: 22px;
             cursor: pointer;
-            padding: 8px 14px;
-            /* Slightly larger padding */
             border-radius: 8px;
             /* Slightly rounder corners */
             z-index: 10;
@@ -578,9 +587,28 @@
             margin-top: 28px
         }
 
+        /* --- MOBILE MEDIA QUERY UPDATE (for arrow centering) --- */
         @media (max-width:880px) {
             .modal {
-                flex-direction: column
+                flex-direction: column;
+                /* Add this line to allow the left panel to define its height */
+                max-height: 90vh;
+                overflow-y: auto;
+                /* Allow scrolling on the modal content if it gets too long */
+            }
+
+            .modal .left {
+                /* Ensures the left panel takes up its full content height */
+                min-height: 260px;
+                /* Match the height of slides/images below */
+                position: relative;
+            }
+
+            .gallery,
+            .gallery img {
+                /* Make sure the gallery container and image fill the space */
+                height: 100%;
+                width: 100%;
             }
 
             .slides {
@@ -599,6 +627,7 @@
                 height: 120px
             }
         }
+        /* --- END MOBILE MEDIA QUERY UPDATE --- */
     </style>
 </head>
 
@@ -642,7 +671,6 @@
                 </div>
             </div>
         </div>
-        <button class="arrow left" id="slidePrev" aria-label="previous slide">❮</button>
         <button class="arrow right" id="slideNext" aria-label="next slide">❯</button>
         <div class="slider-controls" id="dots">
             <div class="dot active" data-index="0"></div>
@@ -1241,6 +1269,41 @@
                 row.scrollLeft += amount;
             }
 
+
+            let currentSlide = 0;
+            const slides = document.getElementById('slides');
+            const dotsContainer = document.getElementById('dots');
+            let slideInterval; // To hold the interval ID for auto-slide
+
+            function showSlide(index) {
+                const totalSlides = slides.children.length;
+                currentSlide = (index + totalSlides) % totalSlides;
+                const offset = -currentSlide * 100;
+                slides.style.transform = `translateX(${offset}%)`;
+
+                // Update dots
+                Array.from(dotsContainer.children).forEach((dot, idx) => {
+                    if (idx === currentSlide) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+
+            function startAutoSlide() {
+                // Clear any existing interval to prevent duplicates
+                clearInterval(slideInterval); 
+                slideInterval = setInterval(() => {
+                    showSlide(currentSlide + 1);
+                }, 5000); // Change slide every 5 seconds
+            }
+
+            function stopAutoSlide() {
+                clearInterval(slideInterval);
+            }
+
+
             document.addEventListener('DOMContentLoaded', () => {
                 // Initial render
                 renderCars();
@@ -1248,6 +1311,24 @@
 
                 // Set current year in footer
                 document.getElementById('year').innerText = new Date().getFullYear();
+
+                // Slider Initialization
+                showSlide(0); // Show the first slide
+                startAutoSlide(); // Start auto-sliding
+
+                // Pause auto-slide on hover
+                const sliderWrap = document.getElementById('top-slider');
+                sliderWrap.addEventListener('mouseenter', stopAutoSlide);
+                sliderWrap.addEventListener('mouseleave', startAutoSlide);
+
+                // Attach event listeners for slider arrows
+                // document.getElementById('slidePrev').onclick = () => showSlide(currentSlide - 1); // Left arrow removed
+                document.getElementById('slideNext').onclick = () => showSlide(currentSlide + 1);
+
+                // Attach event listeners for dots
+                Array.from(dotsContainer.children).forEach(dot => {
+                    dot.onclick = (e) => showSlide(parseInt(e.target.dataset.index));
+                });
             });
 
         </script>
@@ -1255,3 +1336,4 @@
 </body>
 
 </html>
+```http://googleusercontent.com/image_generation_content/0
