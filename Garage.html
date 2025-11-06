@@ -435,20 +435,6 @@
             right: -8px
         }
 
-        /* --- CSS FIX FOR MAIN ROW SCROLL BUTTONS ON MOBILE (Fix 1) --- */
-        @media (max-width: 600px) {
-            .scroll-btn {
-                /* Hide the buttons on mobile, as users can swipe */
-                display: none;
-            }
-
-            /* Also slightly reduce padding on container for max space */
-            .container {
-                padding: 0 10px;
-            }
-        }
-        /* --- END MAIN ROW CSS FIX --- */
-
         .sold {
             opacity: 0.55;
             position: relative
@@ -493,25 +479,30 @@
             display: block;
         }
 
-        /* IMPROVED STYLING FOR MODAL GALLERY ARROWS (Fix 2 & Attraction) */
+        /* --- UPDATED ARROW STYLING FOR MODAL GALLERY (line 401) --- */
         .g-arrow {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5); /* Darker background for visibility */
-            color: white; /* White arrow symbol */
+            /* This centers the arrow vertically */
+            background: rgba(0, 0, 0, 0.55);
+            /* Dark/transparent background */
+            color: white;
+            /* White text */
             border: none;
-            font-size: 20px; /* Slightly larger font */
+            font-size: 22px;
             cursor: pointer;
-            padding: 8px 14px; /* Larger hit area */
+            padding: 8px 14px;
+            /* Slightly larger padding */
             border-radius: 8px;
+            /* Slightly rounder corners */
             z-index: 10;
-            transition: background 0.2s, box-shadow 0.2s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Attractive shadow */
+            transition: background 0.2s;
         }
 
         .g-arrow:hover {
-            background: rgba(0, 0, 0, 0.7); /* Even darker on hover */
+            background: rgba(0, 0, 0, 0.8);
+            /* Darker on hover */
         }
 
         .g-arrow.left {
@@ -521,6 +512,7 @@
         .g-arrow.right {
             right: 8px;
         }
+        /* --- END UPDATED ARROW STYLING --- */
 
         .modal .right {
             flex: 1;
@@ -591,11 +583,6 @@
                 flex-direction: column
             }
 
-            /* FIX 2: Set predictable height for modal image container on mobile */
-            .modal .left {
-                height: 280px; 
-            }
-            
             .slides {
                 height: 260px
             }
@@ -674,7 +661,7 @@
         <div class="row-wrap">
             <button class="scroll-btn left" onclick="scrollRow('rowAvailable', -300)">&larr;</button>
             <div class="car-row" id="rowAvailable">
-                </div>
+            </div>
             <button class="scroll-btn right" onclick="scrollRow('rowAvailable', 300)">&rarr;</button>
         </div>
     </div>
@@ -685,7 +672,7 @@
             <div class="row-wrap">
                 <button class="scroll-btn left" onclick="scrollRow('rowSold', -300)">&larr;</button>
                 <div class="car-row" id="rowSold">
-                    </div>
+                </div>
                 <button class="scroll-btn right" onclick="scrollRow('rowSold', 300)">&rarr;</button>
             </div>
         </div>
@@ -739,7 +726,7 @@
                             style="background:#f0ad4e; color:#07102a; margin-top:0;">Edit Vehicle</a>
                         <a id="deleteBtn" class="btn btn-danger" style="margin-top:0;">Delete Vehicle</a>
                     </div>
-                    </div>
+                </div>
             </div>
         </div>
 
@@ -758,8 +745,7 @@
 
         <div class="login-modal" id="addVehicleModal">
             <div class="login-content" style="max-width:400px; text-align:left;">
-                <span class="close"
-                    onclick="document.getElementById('addVehicleModal').style.display='none'">&times;</span>
+                <span class="close" onclick="document.getElementById('addVehicleModal').style.display='none'">&times;</span>
                 <h3 style="color:var(--accent); margin-top:0; text-align:center;" id="modalTitle">Add New Vehicle</h3>
 
                 <input type="hidden" id="editCarId" value="">
@@ -968,203 +954,182 @@
                     } else {
                         status.innerText = `File selected: ${input.files[0].name}`;
                     }
-                    status.style.color = '#5cb85c';
+                    status.style.color = '#5cb85c'; // Green when file is selected
                 } else {
-                    // During ADD, this reverts to default. During EDIT, this preserves the current status set by openEditModal.
-                    if (document.getElementById('editCarId').value === '') {
-                        status.innerText = input.multiple ? 'No files selected.' : 'No file selected.';
-                        status.style.color = 'var(--muted)';
-                    }
+                    status.innerText = `No file selected.`;
+                    status.style.color = 'var(--muted)'; // Default color
                 }
             }
 
-            function readFileAsBase64(file) {
-                return new Promise((resolve, reject) => {
+            function queueFileProcessing() {
+                const mainFile = document.getElementById('addMainImgFile').files[0];
+                const galleryFiles = document.getElementById('addGalleryImgsFiles').files;
+                const carId = document.getElementById('editCarId').value;
+
+                if (!carId && !mainFile) {
+                    document.getElementById('uploadMessage').innerText = 'Main Image is required for new vehicles.';
+                    return;
+                }
+
+                document.getElementById('submitButton').disabled = true;
+                document.getElementById('uploadMessage').innerText = 'Processing images... please wait.';
+
+                let mainImgBase64 = '';
+                let galleryImgsBase64 = [];
+                let filesToProcess = [];
+
+                if (mainFile) {
+                    filesToProcess.push({ file: mainFile, type: 'main' });
+                }
+                for (let i = 0; i < galleryFiles.length; i++) {
+                    filesToProcess.push({ file: galleryFiles[i], type: 'gallery' });
+                }
+
+                if (filesToProcess.length === 0) {
+                    // No new files selected, proceed directly with text data
+                    saveVehicle(carId, mainImgBase64, galleryImgsBase64);
+                    return;
+                }
+
+                let processedCount = 0;
+                function checkComplete() {
+                    processedCount++;
+                    if (processedCount === filesToProcess.length) {
+                        saveVehicle(carId, mainImgBase64, galleryImgsBase64);
+                    }
+                }
+
+                filesToProcess.forEach(item => {
                     const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
+                    reader.onload = function (e) {
+                        if (item.type === 'main') {
+                            mainImgBase64 = e.target.result;
+                        } else {
+                            galleryImgsBase64.push(e.target.result);
+                        }
+                        checkComplete();
+                    };
+                    reader.onerror = function () {
+                        document.getElementById('uploadMessage').innerText = 'Error reading file.';
+                        document.getElementById('submitButton').disabled = false;
+                    };
+                    reader.readAsDataURL(item.file);
                 });
             }
 
-            async function queueFileProcessing() {
-                if (!isEditor) return;
 
-                const carId = document.getElementById('editCarId').value;
-                const isEditing = carId !== '';
+            function saveVehicle(id, newMainImg, newGalleryImgs) {
+                const isEditing = !!id;
+                const name = document.getElementById('addName').value.trim();
+                const price = document.getElementById('addPrice').value.trim();
+                const desc = document.getElementById('addDesc').value.trim();
+                const specs = document.getElementById('addSpecs').value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+                if (!name || !price || !desc) {
+                    document.getElementById('uploadMessage').innerText = 'Please fill in Name, Price, and Description.';
+                    document.getElementById('submitButton').disabled = false;
+                    return;
+                }
+
                 let carIndex = -1;
-                let existingCar = null;
+                let car = {};
 
                 if (isEditing) {
-                    carIndex = carData.findIndex(car => car.id == carId);
-                    if (carIndex === -1) {
-                        document.getElementById('uploadMessage').innerText = "Error: Car ID not found for editing.";
-                        return;
-                    }
-                    existingCar = carData[carIndex];
-                }
+                    carIndex = carData.findIndex(c => c.id == id);
+                    if (carIndex === -1) return;
+                    car = carData[carIndex];
 
-                const name = document.getElementById('addName').value;
-                const price = document.getElementById('addPrice').value;
-                const mainImgInput = document.getElementById('addMainImgFile');
-                const galleryImgsInput = document.getElementById('addGalleryImgsFiles');
-                const desc = document.getElementById('addDesc').value;
-                const specsStr = document.getElementById('addSpecs').value;
-                const uploadMessage = document.getElementById('uploadMessage');
+                    car.name = name;
+                    car.price = price;
+                    car.desc = desc;
+                    car.specs = specs;
 
-                uploadMessage.innerText = '';
-
-                if (!name || !price) {
-                    uploadMessage.innerText = "Please fill in Name and Price.";
-                    return;
-                }
-
-                // --- IMAGE PROCESSING LOGIC ---
-                let mainImgBase64 = isEditing ? existingCar.mainImg : null;
-                let finalImgs = isEditing ? existingCar.imgs : [];
-
-                // 1. Handle Main Image Upload
-                if (mainImgInput.files.length > 0) {
-                    uploadMessage.style.color = 'orange';
-                    uploadMessage.innerText = isEditing ? "Processing new main image..." : "Processing images...";
-                    // New main image selected: process it
-                    mainImgBase64 = await readFileAsBase64(mainImgInput.files[0]);
-                    finalImgs = [mainImgBase64]; // Start gallery with the new main image (gallery images might follow)
-                }
-
-                // If in ADD mode, and no file selected, throw error
-                if (!isEditing && mainImgInput.files.length === 0) {
-                    uploadMessage.innerText = "Please select a Main Image for a new vehicle.";
-                    return;
-                }
-
-                // 2. Handle Additional Gallery Images Upload
-                if (galleryImgsInput.files.length > 0) {
-                    uploadMessage.style.color = 'orange';
-                    uploadMessage.innerText = "Processing additional gallery images...";
-                    const galleryFiles = Array.from(galleryImgsInput.files);
-                    const galleryBase64Promises = galleryFiles.map(file => readFileAsBase64(file));
-                    const galleryBase64 = await Promise.all(galleryBase64Promises);
-
-                    // If new main image was uploaded, combine it with new gallery images
-                    if (mainImgInput.files.length > 0) {
-                        finalImgs = [mainImgBase64, ...galleryBase64];
-                    } else if (isEditing) {
-                        // If editing, and only new gallery images are uploaded (no new main img), replace ALL gallery images but keep the old mainImg.
-                        // NOTE: For simplicity, if gallery files are uploaded, we replace ALL secondary images.
-                        finalImgs = [existingCar.mainImg, ...galleryBase64];
-                        mainImgBase64 = existingCar.mainImg;
-                    } else {
-                        // This case is unlikely in 'add' mode since we require a main image, but handle it defensively.
-                        finalImgs = galleryBase64;
+                    // If new image provided, update it. If not, keep the old one.
+                    if (newMainImg) {
+                        car.mainImg = newMainImg;
                     }
 
-                } else if (isEditing && mainImgInput.files.length > 0) {
-                    // If editing, and new main img uploaded, but NO new gallery images, the new main img is the only item in finalImgs (set in step 1).
-                    // We need to re-add the original secondary images if they exist and we didn't upload new gallery images.
-
-                    // We'll trust the original finalImgs array unless a new gallery upload was made.
-                    // If ONLY main image changed, we must update the first element of finalImgs but keep the rest.
-                    if (existingCar.imgs.length > 1 && finalImgs.length === 1) {
-                        // New main image uploaded (finalImgs = [newMainImg]), but no new gallery images.
-                        // Preserve old secondary images (indices 1 to end).
-                        finalImgs = [mainImgBase64, ...existingCar.imgs.slice(1)];
+                    // If new gallery images provided, replace ALL of them. If not, keep old ones.
+                    if (newGalleryImgs.length > 0) {
+                        car.imgs = [car.mainImg, ...newGalleryImgs];
+                    } else if (newMainImg && car.imgs) {
+                        // If only main image was updated, replace the *first* image in the gallery array
+                        car.imgs[0] = newMainImg;
                     }
 
-                } else if (isEditing && mainImgInput.files.length === 0 && galleryImgsInput.files.length === 0) {
-                    // If editing, and no new files selected, keep existing finalImgs array (already set to existingCar.imgs)
-                    finalImgs = existingCar.imgs;
-                }
 
-                // --- CONSTRUCT/UPDATE CAR OBJECT ---
-                const specs = specsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
-
-                const newCarData = {
-                    id: isEditing ? existingCar.id : Date.now(),
-                    name: name,
-                    price: price,
-                    mainImg: mainImgBase64,
-                    imgs: finalImgs,
-                    desc: desc,
-                    specs: specs,
-                    sold: isEditing ? existingCar.sold : false // Preserve sold status during edit
-                };
-
-                if (isEditing) {
-                    carData[carIndex] = newCarData;
-                    uploadMessage.innerText = `Vehicle "${name}" updated successfully!`;
                 } else {
-                    carData.unshift(newCarData);
-                    uploadMessage.innerText = `Vehicle "${name}" added successfully!`;
+                    // Adding New Vehicle
+                    const newId = carData.length > 0 ? Math.max(...carData.map(c => c.id)) + 1 : 1;
+                    car = {
+                        id: newId,
+                        name: name,
+                        price: price,
+                        mainImg: newMainImg,
+                        desc: desc,
+                        specs: specs,
+                        sold: false
+                    };
+                    car.imgs = [car.mainImg, ...newGalleryImgs];
+                    carData.unshift(car); // Add to the start of the array
                 }
 
-                // Final cleanup and update
-                document.getElementById('addVehicleModal').style.display = 'none';
                 saveCarData();
                 renderCars();
-                uploadMessage.style.color = '#5cb85c';
-                // Clear inputs
-                document.getElementById('addName').value = '';
-                document.getElementById('addPrice').value = '';
-                document.getElementById('addDesc').value = '';
-                document.getElementById('addSpecs').value = '';
-                document.getElementById('addMainImgFile').value = '';
-                document.getElementById('addGalleryImgsFiles').value = '';
-                document.getElementById('editCarId').value = ''; // Reset ID
-                document.getElementById('submitButton').style.background = 'var(--accent)'; // Reset button color
+
+                // Reset form fields
+                document.getElementById('addVehicleModal').style.display = 'none';
+                document.getElementById('submitButton').disabled = false;
+                document.getElementById('uploadMessage').innerText = '';
+                resetAddEditModal();
+
+                alert(`Vehicle "${name}" successfully ${isEditing ? 'updated' : 'added'}!`);
             }
 
-
-            function openAddVehicleModal() {
-                if (!isEditor) return;
-
-                // Reset modal for ADD mode
+            function resetAddEditModal() {
                 document.getElementById('modalTitle').innerText = 'Add New Vehicle';
                 document.getElementById('submitButton').innerText = 'Add Vehicle';
                 document.getElementById('submitButton').style.background = 'var(--accent)';
                 document.getElementById('editCarId').value = '';
-
-                // Clear all form inputs
                 document.getElementById('addName').value = '';
                 document.getElementById('addPrice').value = '';
                 document.getElementById('addDesc').value = '';
                 document.getElementById('addSpecs').value = '';
                 document.getElementById('addMainImgFile').value = '';
                 document.getElementById('addGalleryImgsFiles').value = '';
-                document.getElementById('uploadMessage').innerText = '';
-
-                // Reset file status displays
                 document.getElementById('mainImgStatus').innerText = 'No file selected.';
                 document.getElementById('galleryImgStatus').innerText = 'No files selected.';
                 document.getElementById('mainImgStatus').style.color = 'var(--muted)';
                 document.getElementById('galleryImgStatus').style.color = 'var(--muted)';
+            }
 
-
+            function openAddVehicleModal() {
+                if (!isEditor) return alert("You must be logged in as an editor to add vehicles.");
+                resetAddEditModal();
                 document.getElementById('addVehicleModal').style.display = 'flex';
             }
 
 
-            // --- CAR RENDERING LOGIC ---
+            // --- UI RENDERING LOGIC ---
+
             function createCarCard(car) {
                 const card = document.createElement('div');
                 card.className = `car-card ${car.sold ? 'sold' : ''} ${isEditor ? 'editor-mode' : ''}`;
-
-                // ALWAYS enable click to open the modal for detail view
+                card.setAttribute('data-id', car.id);
                 card.onclick = () => openModal(car);
 
                 let soldButton = '';
                 if (isEditor && !car.sold) {
-                    // Use a dataset attribute to pass the ID to the function
-                    soldButton = `<div class="sold-btn" data-car-id="${car.id}">Mark Sold</div>`;
+                    soldButton = `<button class="sold-btn" onclick="event.stopPropagation(); markAsSold(${car.id})">Mark as Sold</button>`;
                 }
 
                 card.innerHTML = `
+                    ${soldButton}
                     <img src="${car.mainImg}" alt="${car.name}">
                     <div class="meta">
                         <div class="name">${car.name}</div>
                         <div class="price">${car.price}</div>
                     </div>
-                    ${soldButton}
                 `;
                 return card;
             }
@@ -1172,174 +1137,121 @@
             function renderCars() {
                 const availableRow = document.getElementById('rowAvailable');
                 const soldRow = document.getElementById('rowSold');
+
                 availableRow.innerHTML = '';
                 soldRow.innerHTML = '';
 
-                carData.forEach(car => {
-                    const card = createCarCard(car);
-                    if (car.sold) {
-                        soldRow.appendChild(card);
-                    } else {
-                        availableRow.appendChild(card);
-                    }
-                });
+                const availableCars = carData.filter(car => !car.sold);
+                const soldCars = carData.filter(car => car.sold);
 
-                // Add event listeners for the new "Mark Sold" buttons
-                document.querySelectorAll('.sold-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Prevent modal from opening
-                        const carId = button.getAttribute('data-car-id');
-                        markAsSold(carId);
-                    });
-                });
+                availableCars.forEach(car => availableRow.appendChild(createCarCard(car)));
+                soldCars.forEach(car => soldRow.appendChild(createCarCard(car)));
+
+                // Update visibility of scroll buttons based on content overflow (not implemented here, but good practice)
             }
 
-            // --- EXISTING FUNCTIONS (Modal and Slider) ---
 
-            document.getElementById('year').textContent = new Date().getFullYear();
-
-            function scrollRow(id, distance) {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.scrollBy({
-                    left: distance,
-                    behavior: 'smooth'
-                });
-            }
+            // --- DETAIL MODAL LOGIC (Movement and Content) ---
 
             const modalBack = document.getElementById('modalBack');
+            const gallery = document.getElementById('modalGallery');
+
+            function closeModal() {
+                modalBack.style.display = 'none';
+                document.body.style.overflow = 'auto'; // Restore scrolling
+            }
 
             function openModal(data) {
-                const gallery = document.getElementById('modalGallery');
-                gallery.innerHTML = '';
-
-                // Use the 'imgs' array for the gallery. It contains Base64 strings or file paths.
-                const imgsArray = Array.isArray(data.imgs) && data.imgs.length > 0 ? data.imgs : [data.mainImg];
-
-                imgsArray.forEach((src, i) => {
-                    const img = document.createElement('img');
-                    img.src = src; // Works for both Base64 and file paths
-                    if (i === 0) img.classList.add('active');
-                    gallery.appendChild(img);
-                });
-
-
                 document.getElementById('modalName').innerText = data.name;
                 document.getElementById('modalPrice').innerText = data.price;
-                document.getElementById('modalDesc').innerText = data.desc || '';
+                document.getElementById('modalDesc').innerText = data.desc;
 
-                const specsList = document.getElementById('modalSpecs');
-                specsList.innerHTML = '';
-                if (Array.isArray(data.specs)) {
-                    data.specs.forEach(s => {
+                // Specs List
+                const specsUl = document.getElementById('modalSpecs');
+                specsUl.innerHTML = '';
+                if (data.specs) {
+                    data.specs.forEach(spec => {
                         const li = document.createElement('li');
-                        li.innerText = s;
-                        specsList.appendChild(li);
+                        li.innerText = spec;
+                        specsUl.appendChild(li);
                     });
                 }
 
-                // Contact buttons visibility and links
-                const whBtn = document.getElementById('whBtn');
-                const callBtn = document.getElementById('callBtn');
+                // WhatsApp and Call buttons (using fixed number)
                 const phone = '+923339017459';
-
-                if (data.sold) {
-                    // Hide contact buttons for sold cars
-                    whBtn.style.display = 'none';
-                    callBtn.style.display = 'none';
-                } else {
-                    // Show contact buttons for available cars
-                    whBtn.style.display = 'inline-block';
-                    callBtn.style.display = 'inline-block';
-                    whBtn.href = `https://api.whatsapp.com/send?phone=${phone}&text=I'm%20interested%20in%20${encodeURIComponent(data.name)}`;
-                    callBtn.href = `tel:${phone}`;
-                }
+                const whatsappText = `Hello, I'm interested in the *${data.name}* I saw on your website.`;
+                document.getElementById('whBtn').href = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappText)}`;
+                document.getElementById('callBtn').href = `tel:${phone}`;
 
 
-                // EDITOR ACTIONS SETUP
+                // Editor Actions (Edit/Delete)
                 const editorActionsDiv = document.getElementById('modalEditorActions');
                 if (isEditor) {
                     editorActionsDiv.style.display = 'flex';
-                    // Set up Delete button click handler
-                    document.getElementById('deleteBtn').onclick = () => deleteVehicle(data.id, data.name);
-                    // Set up Edit button click handler (NEW)
                     document.getElementById('editBtn').onclick = () => {
-                        closeModal(); // Close detail modal first
-                        openEditModal(data.id); // Open the Edit form
+                        closeModal();
+                        openEditModal(data.id);
                     };
-
+                    document.getElementById('deleteBtn').onclick = () => deleteVehicle(data.id, data.name);
                 } else {
                     editorActionsDiv.style.display = 'none';
                 }
 
-                modalBack.style.display = 'flex';
+                // Gallery Setup (Image Movement Logic)
+                gallery.innerHTML = ''; // Clear previous images
+                data.imgs = data.imgs || []; // Ensure imgs array exists
+
+                data.imgs.forEach((imgSrc, index) => {
+                    const img = document.createElement('img');
+                    img.src = imgSrc;
+                    if (index === 0) {
+                        img.classList.add('active');
+                    }
+                    gallery.appendChild(img);
+                });
 
                 let current = 0;
                 const imgs = gallery.querySelectorAll('img');
                 const prevBtn = document.getElementById('galleryPrev');
                 const nextBtn = document.getElementById('galleryNext');
 
-                // Show/hide gallery buttons if only one image
+                // Show/hide buttons if only one image is present
                 prevBtn.style.display = imgs.length > 1 ? 'block' : 'none';
                 nextBtn.style.display = imgs.length > 1 ? 'block' : 'none';
 
                 function show(i) {
                     imgs[current].classList.remove('active');
+                    // Calculate the next/previous index, wrapping around using the modulo operator (%)
                     current = (i + imgs.length) % imgs.length;
-                    imgs[current].classList.add('active');
+                    imgs[current].classList.add('active'); // Show the new image
                 }
 
-                prevBtn.onclick = () => show(current - 1);
-                nextBtn.onclick = () => show(current + 1);
+                // Attach the function to the buttons
+                prevBtn.onclick = () => show(current - 1); // Go backward
+                nextBtn.onclick = () => show(current + 1); // Go forward
+
+                modalBack.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Prevent scrolling the body
             }
 
-            function closeModal() {
-                modalBack.style.display = 'none';
-            }
+            // --- GENERAL UTILITIES ---
 
-            modalBack.addEventListener('click', function (e) {
-                if (e.target === modalBack) closeModal();
-            });
+            function scrollRow(rowId, amount) {
+                const row = document.getElementById(rowId);
+                row.scrollLeft += amount;
+            }
 
             document.addEventListener('DOMContentLoaded', () => {
-                // Initial render and view update
+                // Initial render
+                renderCars();
                 updateEditorView();
+
+                // Set current year in footer
+                document.getElementById('year').innerText = new Date().getFullYear();
             });
 
-
-            // === SLIDER LOGIC ===
-            const slides = document.querySelectorAll(".slide");
-            const dots = document.querySelectorAll(".dot");
-            const slideNextBtn = document.getElementById("slideNext");
-            const slidePrevBtn = document.getElementById("slidePrev");
-            const slidesContainer = document.getElementById("slides");
-
-            let currentSlide = 0;
-            const totalSlides = slides.length;
-
-            function showSlide(index) {
-                currentSlide = (index + totalSlides) % totalSlides;
-                slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
-
-                dots.forEach((dot, i) => {
-                    dot.classList.toggle("active", i === currentSlide);
-                });
-            }
-
-            // Manual navigation
-            slideNextBtn.addEventListener("click", () => showSlide(currentSlide + 1));
-            slidePrevBtn.addEventListener("click", () => showSlide(currentSlide - 1));
-
-            // Dots navigation
-            dots.forEach((dot, i) => {
-                dot.addEventListener("click", () => showSlide(i));
-            });
-
-            // Automatic sliding every 2 seconds
-            setInterval(() => {
-                showSlide(currentSlide + 1);
-            }, 2000);
         </script>
+
 </body>
 
 </html>
