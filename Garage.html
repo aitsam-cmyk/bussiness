@@ -48,9 +48,10 @@
             border-radius: 12px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            position: relative; /* Added for close button positioning */
+            position: relative;
+            /* Added for close button positioning */
         }
-        
+
         /* Style for the close button 'x' */
         .login-content .close {
             position: absolute;
@@ -433,6 +434,20 @@
         .scroll-btn.right {
             right: -8px
         }
+
+        /* --- NEW CSS FIX FOR MOBILE VIEW --- */
+        @media (max-width: 600px) {
+            .scroll-btn {
+                /* Hide the buttons on mobile, as users can swipe */
+                display: none;
+            }
+
+            /* Also slightly reduce padding on container for max space */
+            .container {
+                padding: 0 10px;
+            }
+        }
+        /* --- END NEW CSS FIX --- */
 
         .sold {
             opacity: 0.55;
